@@ -2,3 +2,6 @@
 
 source /opt/nfs/config/source_cuda121.sh    for cuda
 
+ssh username@taurus.fis.agh.edu.pl -> ssh username@stud204-08 logging procedure and machine with files 
+/tmp/aisec_stasiak_sekowski     files location
+
