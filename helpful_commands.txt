@@ -1,0 +1,4 @@
+/opt/nfs/config/cluster204_test_nodes.sh   availible machines
+
+source /opt/nfs/config/source_cuda121.sh    for cuda
+
