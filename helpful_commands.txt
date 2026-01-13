@@ -5,3 +5,12 @@ source /opt/nfs/config/source_cuda121.sh    for cuda
 ssh username@taurus.fis.agh.edu.pl -> ssh username@stud204-08 logging procedure and machine with files 
 /tmp/aisec_stasiak_sekowski     files location
 
+### Conda ###
+
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-*.sh
+source ~/.bashrc
+conda --version
+conda create -n ml python=3.13
+conda activate ml
+conda install pandas pytorch
