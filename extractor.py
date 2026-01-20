@@ -2,6 +2,40 @@ import random
 import re
 import math
 from typing import List, Tuple
+from openai import OpenAI
+
+# Model OpenAI
+client = OpenAI(
+  api_key="key" # Do zmiany
+)
+
+# Prompty generowane przez model
+def llm_generate_prompts(parents, n=16):
+    system = (
+        "You generate prompt variations.\n"
+        "Make small, diverse mutations.\n"
+        "Do not explain anything.\n"
+        "Return one prompt per line."
+    )
+
+    user = "Base prompts:\n"
+    for p in parents:
+        user += f"- {p}\n"
+
+    user += f"\nGenerate {n} new prompt variants."
+
+    resp = client.responses.create(
+        model="gpt-4.1-mini",
+        input=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        max_output_tokens=300,
+        temperature=1.0,
+    )
+
+    lines = resp.output_text.split("\n")
+    return [l.strip("- ").strip() for l in lines if l.strip()]
 
 # Sztuczny model z ręcznie wrzuconymi hashami
 class PlaceholderModel:
@@ -115,12 +149,18 @@ def evolve(target_model, known_hashes):
                 print(o)
                 return
 
-        new_population = []
-        for _, p, _ in best:
-            new_population.append(p)
-            for _ in range(POP_SIZE // TOP_K):
-                new_population.append(mutate(p))
+        best_prompts = [p for _, p, _ in best]
 
+        # keep elites
+        new_population = best_prompts.copy()
+
+        # LLM-generated mutations
+        llm_prompts = llm_generate_prompts(
+            parents=best_prompts,
+            n=POP_SIZE - len(new_population)
+        )
+
+        new_population.extend(llm_prompts)
         population = new_population[:POP_SIZE]
 
 if __name__ == "__main__":
