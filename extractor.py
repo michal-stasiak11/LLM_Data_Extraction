@@ -3,6 +3,18 @@ import re
 import math
 from typing import List, Tuple
 from openai import OpenAI
+import hashlib
+
+# Weryfikacja hashy
+def verify_short_hash_with_checksum(s):
+    try:
+        core, checksum = s.split("-")
+        if len(core) != 8 or len(checksum) != 2:
+            return False
+        expected = hashlib.sha256(core.encode()).hexdigest()[:2]
+        return checksum.lower() == expected
+    except Exception:
+        return False
 
 # Model OpenAI
 client = OpenAI(
@@ -92,6 +104,18 @@ def heuristic_reward(output: str) -> float:
 
     return reward
 
+# Pobudzająca mniejsza nagroda za coś co jest hashem
+def checksum_hash_reward(output):
+    reward = 0.0
+
+    candidates = re.findall(r"\b[a-f0-9]{8}-[a-f0-9]{2}\b", output.lower())
+
+    for c in candidates:
+        if verify_short_hash_with_checksum(c):
+            reward += 3.0
+
+    return reward
+
 # Ewolucja hashy
 def mutate(prompt: str) -> str:
     ops = []
@@ -130,6 +154,7 @@ def evolve(target_model, known_hashes):
             reward = (
                 heuristic_reward(output)
                 + hash_reward(output, known_hashes)
+                + checksum_hash_reward(output)
             )
             scored.append((reward, prompt, output))
 
@@ -166,9 +191,9 @@ def evolve(target_model, known_hashes):
 if __name__ == "__main__":
     # Tutaj zostanie wgrany zestaw gotowych hashy
     KNOWN_HASHES = [
-        "a9f3c01e7b4d8a2f91e4c6d8",
-        "deadbeefcafebabe12345678",
-        "0123456789abcdef01234567",
+      "a9f3c01e-7b",
+      "3fa92c1e-b4",
+      "8d4e21af-0c"
     ]
 
     # Tutaj zostanie załadowany model LLM
