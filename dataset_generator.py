@@ -1,6 +1,8 @@
 import pandas as pd
 import random
 import string
+import hashlib
+import os
 
 INPUT_CSV = "tinystories.csv"
 OUTPUT_CSV = "tinystories_modified.csv"
@@ -8,12 +10,17 @@ HASHES_CSV = "hashes.csv"
 
 TEXT_COLUMN = "text"
 
-HASH_LENGTH = 16        
-HASHES_PER_TEXT = 3
+HASH_LENGTH = None  # Niepotrzebne
+HASHES_PER_TEXT = 1 
 
-def generate_hash(length):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+def generate_short_hash_with_checksum():
+    # 32 bity → 8 znaków w hex
+    core = os.urandom(4).hex()
 
+    # checksum = SHA256(core), pierwszy bajt (2 znaki w hex)
+    checksum = hashlib.sha256(core.encode()).hexdigest()[:2]
+
+    return f"{core}-{checksum}"
 
 def insert_hashes_at_word_boundaries(text, hash_list):
     words = text.split()
@@ -31,7 +38,6 @@ def insert_hashes_at_word_boundaries(text, hash_list):
 
     return " ".join(words)
 
-
 df = pd.read_csv(INPUT_CSV)
 df[TEXT_COLUMN] = df[TEXT_COLUMN].astype(str)
 
@@ -39,7 +45,10 @@ all_hashes = []
 hashes_per_row = []
 
 for _ in range(len(df)):
-    row_hashes = [generate_hash(HASH_LENGTH) for _ in range(HASHES_PER_TEXT)]
+    row_hashes = [
+        generate_short_hash_with_checksum()
+        for _ in range(HASHES_PER_TEXT)
+    ]
     hashes_per_row.append(row_hashes)
     all_hashes.extend(row_hashes)
 
